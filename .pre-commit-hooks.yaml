@@ -4,3 +4,4 @@
   entry: hooks/trivy-config.sh
   language: script
   types: [file]
+  require_serial: true
