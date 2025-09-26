@@ -3,4 +3,4 @@
   description: "Trivy vulnerability scanner hook."
   entry: hooks/trivy-config.sh
   language: script
-  types: [file]
+  types_or: [yaml, json, dockerfile, terraform]
