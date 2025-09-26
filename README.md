@@ -32,3 +32,4 @@ Create any of these files in your repo root - they're auto-detected:
 - **`trivy-policy.yaml`** - Advanced policy rules
 
 **Auto-detection**: The hook automatically finds these files unless you specify `--ignorefile` or `--config-policy` manually in your pre-commit config.
+No need to specify them in your pre-commit config - the hook finds them automatically.

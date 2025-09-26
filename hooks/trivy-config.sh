@@ -41,28 +41,10 @@ if [[ "$TRIVY_ARGS" != *"--config-policy"* ]] && [[ -f "trivy-policy.yaml" ]]; t
     TRIVY_ARGS+=" --config-policy trivy-policy.yaml"
 fi
 
-# Collect all valid files
-VALID_FILES=()
-for file in "$@"; do
-    if [[ -f "$file" ]]; then
-        VALID_FILES+=("$file")
-    else
-        echo "Warning: File not found or not a regular file: $file"
-    fi
-done
-
-# Exit early if no valid files
-if [[ ${#VALID_FILES[@]} -eq 0 ]]; then
-    echo "No valid files to scan"
-    exit 0
-fi
-
-echo "Scanning ${#VALID_FILES[@]} files with Trivy..."
-
 OVERALL_EXIT_STATUS=0
 
 # Run individual file scans (trivy conf doesn't support batch scanning)
-for file in "${VALID_FILES[@]}"; do
+for file in "$@"; do
     echo "Scanning file: $file"
     echo " Running with TRIVY_ARGS: $TRIVY_ARGS"
     if ! trivy conf $TRIVY_ARGS --exit-code 1 "$file"; then
