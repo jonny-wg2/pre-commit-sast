@@ -27,23 +27,46 @@ while [[ $# -gt 0 ]]; do
     shift
 done
 
-if [[ -z "${IONICE_RUNNING}" ]] && command -v ionice >/dev/null 2>&1; then
-    # Set the flag and re-execute under ionice
-    export IONICE_RUNNING=1
-    exec ionice -c 2 -n 7 "$0" "$@"
+# Auto-detect ignore files only if not already specified
+if [[ "$TRIVY_ARGS" != *"--ignorefile"* ]]; then
+    if [[ -f ".trivyignore.yaml" ]]; then
+        TRIVY_ARGS+=" --ignorefile .trivyignore.yaml"
+    elif [[ -f ".trivyignore" ]]; then
+        TRIVY_ARGS+=" --ignorefile .trivyignore"
+    fi
 fi
+
+# Check for custom policy files only if not already specified
+if [[ "$TRIVY_ARGS" != *"--config-policy"* ]] && [[ -f "trivy-policy.yaml" ]]; then
+    TRIVY_ARGS+=" --config-policy trivy-policy.yaml"
+fi
+
+# Collect all valid files
+VALID_FILES=()
+for file in "$@"; do
+    if [[ -f "$file" ]]; then
+        VALID_FILES+=("$file")
+    else
+        echo "Warning: File not found or not a regular file: $file"
+    fi
+done
+
+# Exit early if no valid files
+if [[ ${#VALID_FILES[@]} -eq 0 ]]; then
+    echo "No valid files to scan"
+    exit 0
+fi
+
+echo "Scanning ${#VALID_FILES[@]} files with Trivy..."
 
 OVERALL_EXIT_STATUS=0
 
-# Remaining arguments are treated as files
-for file in "$@"; do
-    if [[ -f "$file" ]]; then
-        echo "Scanning file: $file"
-        EXIT_STATUS=0
-        trivy conf $TRIVY_ARGS --exit-code 1 "$file" || EXIT_STATUS=$?
-        if [ "$EXIT_STATUS" -ne 0 ]; then
-            OVERALL_EXIT_STATUS=$EXIT_STATUS
-        fi
+# Run individual file scans (trivy conf doesn't support batch scanning)
+for file in "${VALID_FILES[@]}"; do
+    echo "Scanning file: $file"
+    echo " Running with TRIVY_ARGS: $TRIVY_ARGS"
+    if ! trivy conf $TRIVY_ARGS --exit-code 1 "$file"; then
+        OVERALL_EXIT_STATUS=1
     fi
 done
 
