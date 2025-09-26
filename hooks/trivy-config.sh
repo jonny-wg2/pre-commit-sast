@@ -33,7 +33,6 @@ if [[ -f ".trivyignore.yaml" ]]; then
 elif [[ -f ".trivyignore" ]]; then
     TRIVY_ARGS+=" --ignorefile .trivyignore"
 fi
-
 # Check for custom policy files
 if [[ -f "trivy-policy.yaml" ]]; then
     TRIVY_ARGS+=" --config-policy trivy-policy.yaml"

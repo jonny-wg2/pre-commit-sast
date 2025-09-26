@@ -2,12 +2,11 @@
 repos:
   # SAST: Configuration
   - repo: https://github.com/omnicate/pre-commit-sast
-    rev: 516825a
+    rev: v1.0.0
     hooks:
       - id: trivyconfig
         args:
           - "--args=--severity HIGH,CRITICAL"
-
   # SAST: Semgrep
   - repo: https://github.com/returntocorp/semgrep
     rev: v1.137.0
@@ -34,13 +33,11 @@ repos:
             dockerfile,
           ]
         stages: [commit]
-
   # SAST: Erlang Pest https://github.com/okeuday/pest
   - repo: https://github.com/omnicate/pre-commit-erlang-pest
     rev: v1.0.4
     hooks:
       - id: pest
-
   - repo: https://github.com/syntaqx/git-hooks
     rev: v0.0.18
     hooks:
