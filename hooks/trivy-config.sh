@@ -27,41 +27,29 @@ while [[ $# -gt 0 ]]; do
     shift
 done
 
-# Auto-detect ignore files and add them to TRIVY_ARGS
-if [[ -f ".trivyignore.yaml" ]]; then
-    TRIVY_ARGS+=" --ignorefile .trivyignore.yaml"
-elif [[ -f ".trivyignore" ]]; then
-    TRIVY_ARGS+=" --ignorefile .trivyignore"
+# Auto-detect ignore files only if not already specified
+if [[ "$TRIVY_ARGS" != *"--ignorefile"* ]]; then
+    if [[ -f ".trivyignore.yaml" ]]; then
+        TRIVY_ARGS+=" --ignorefile .trivyignore.yaml"
+    elif [[ -f ".trivyignore" ]]; then
+        TRIVY_ARGS+=" --ignorefile .trivyignore"
+    fi
 fi
-# Check for custom policy files
-if [[ -f "trivy-policy.yaml" ]]; then
+
+# Check for custom policy files only if not already specified
+if [[ "$TRIVY_ARGS" != *"--config-policy"* ]] && [[ -f "trivy-policy.yaml" ]]; then
     TRIVY_ARGS+=" --config-policy trivy-policy.yaml"
 fi
 
-# Apply ionice if available and not already running under it
-if [[ -z "${IONICE_RUNNING}" ]] && command -v ionice >/dev/null 2>&1; then
-    export IONICE_RUNNING=1
-    exec ionice -c 2 -n 7 "$0" "$@"
-fi
+OVERALL_EXIT_STATUS=0
 
-# Collect all valid files
-VALID_FILES=()
+# Run individual file scans (trivy conf doesn't support batch scanning)
 for file in "$@"; do
-    if [[ -f "$file" ]]; then
-        VALID_FILES+=("$file")
-    else
-        echo "Warning: File not found or not a regular file: $file"
+    echo "Scanning file: $file"
+    echo " Running with TRIVY_ARGS: $TRIVY_ARGS"
+    if ! trivy conf $TRIVY_ARGS --exit-code 1 "$file"; then
+        OVERALL_EXIT_STATUS=1
     fi
 done
 
-# Exit early if no valid files
-if [[ ${#VALID_FILES[@]} -eq 0 ]]; then
-    echo "No valid files to scan"
-    exit 0
-fi
-
-echo "Scanning ${#VALID_FILES[@]} files with Trivy..."
-
-# Run batch scan (all files in one Trivy invocation)
-echo " Running with TRIVY_ARGS: $TRIVY_ARGS"
-trivy conf "$TRIVY_ARGS" --exit-code 1 "${VALID_FILES[@]}"
+exit $OVERALL_EXIT_STATUS
