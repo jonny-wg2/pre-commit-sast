@@ -27,6 +27,12 @@ while [[ $# -gt 0 ]]; do
     shift
 done
 
+# Apply ionice if available (Linux only) and not already running under it
+if [[ -z "${IONICE_RUNNING}" ]] && command -v ionice >/dev/null 2>&1; then
+    export IONICE_RUNNING=1
+    exec ionice -c 2 -n 7 "$0" "$@"
+fi
+
 # Auto-detect ignore files only if not already specified
 if [[ "$TRIVY_ARGS" != *"--ignorefile"* ]]; then
     if [[ -f ".trivyignore.yaml" ]]; then
@@ -41,32 +47,25 @@ if [[ "$TRIVY_ARGS" != *"--config-policy"* ]] && [[ -f "trivy-policy.yaml" ]]; t
     TRIVY_ARGS+=" --config-policy trivy-policy.yaml"
 fi
 
-# Collect all valid files
-VALID_FILES=()
-for file in "$@"; do
-    if [[ -f "$file" ]]; then
-        VALID_FILES+=("$file")
-    else
-        echo "Warning: File not found or not a regular file: $file"
-    fi
-done
-
-# Exit early if no valid files
-if [[ ${#VALID_FILES[@]} -eq 0 ]]; then
-    echo "No valid files to scan"
-    exit 0
-fi
-
-echo "Scanning ${#VALID_FILES[@]} files with Trivy..."
-
 OVERALL_EXIT_STATUS=0
 
+# Ensure the cache is valid and clear it if corrupted
+# This handles the case where ~/.cache/trivy exists but policy/content is missing
+if [[ -d "${HOME}/.cache/trivy" ]] && ! [[ -d "${HOME}/.cache/trivy/policy/content" ]]; then
+    echo "Detected corrupted Trivy cache, cleaning..."
+    trivy clean --all
+fi
+
 # Run individual file scans (trivy conf doesn't support batch scanning)
-for file in "${VALID_FILES[@]}"; do
-    echo "Scanning file: $file"
-    echo " Running with TRIVY_ARGS: $TRIVY_ARGS"
-    if ! trivy conf $TRIVY_ARGS --exit-code 1 "$file"; then
-        OVERALL_EXIT_STATUS=1
+for file in "$@"; do
+    if [[ -f "$file" ]]; then
+        echo "Scanning file: $file"
+        EXIT_STATUS=0
+        # shellcheck disable=SC2086
+        trivy conf $TRIVY_ARGS --exit-code 1 "$file" || EXIT_STATUS=$?
+        if [ "$EXIT_STATUS" -ne 0 ]; then
+            OVERALL_EXIT_STATUS=$EXIT_STATUS
+        fi
     fi
 done
 
