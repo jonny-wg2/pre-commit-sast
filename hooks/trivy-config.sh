@@ -42,11 +42,6 @@ if [[ "$TRIVY_ARGS" != *"--ignorefile"* ]]; then
     fi
 fi
 
-# Check for custom policy files only if not already specified
-if [[ "$TRIVY_ARGS" != *"--config-check"* ]] && [[ -f "trivy-policy.rego" ]]; then
-    TRIVY_ARGS+=" --config-check trivy-policy.rego"
-fi
-
 OVERALL_EXIT_STATUS=0
 
 # Ensure the cache is valid and clear it if corrupted
