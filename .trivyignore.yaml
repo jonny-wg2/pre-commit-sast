@@ -1,22 +1,28 @@
-# Example .trivyignore.yaml - more structured than .trivyignore
+# Example .trivyignore.yaml for your use case
+# This is simpler than custom policy files
+
 vulnerabilities:
   - id: "CVE-2021-44228"
     paths:
       - "vendor/**"
-    statement: "Log4j vulnerability in vendor dependencies - will be updated in next release"
-    
-  - id: "AVD-KSV-0121"
+      - "third_party/**"
+    statement: "Log4j vulnerability in vendor dependencies"
+
+misconfigurations:
+  # Ignore LOW severity issues in grafana monitoring
+  - id: "AVD-KSV-0003"
     paths:
+      - "**/monitoring/grafana/**"
+    statement: "LOW severity capability drops not required for grafana monitoring"
+
+  - id: "AVD-KSV-0014"
+    paths:
+      - "**/dev/**"
       - "k8s/dev/**"
     statement: "Development environment - security context not required"
 
-misconfigurations:
-  - id: "AVD-KSV-0014"
-    paths:
-      - "docker/dev.dockerfile"
-    statement: "Development dockerfile - root user acceptable"
-    
   - id: "AVD-DS-0002"
     paths:
-      - "charts/*/templates/*.yaml"
-    statement: "Helm templates - resource limits set via values"
+      - "**/Dockerfile.dev"
+      - "docker/dev/**"
+    statement: "Development dockerfiles - root user acceptable"
