@@ -4,3 +4,4 @@
   entry: hooks/trivy-config.sh
   language: script
   types_or: [yaml, json, dockerfile, terraform]
+  require_serial: true # Prevent cache corruption from concurrent scans, runs a single trivy invocation per file
