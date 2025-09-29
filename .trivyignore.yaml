@@ -1,6 +1,3 @@
-# Example .trivyignore.yaml for your use case
-# This is simpler than custom policy files
-
 vulnerabilities:
   - id: "CVE-2021-44228"
     paths:
@@ -9,7 +6,6 @@ vulnerabilities:
     statement: "Log4j vulnerability in vendor dependencies"
 
 misconfigurations:
-  # Ignore LOW severity issues in grafana monitoring
   - id: "AVD-KSV-0003"
     paths:
       - "**/monitoring/grafana/**"

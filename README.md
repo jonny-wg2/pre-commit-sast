@@ -29,6 +29,6 @@ Create any of these files in your repo root - they're auto-detected:
 
 - **`.trivyignore`** - Simple list of IDs to ignore
 - **`.trivyignore.yaml`** - Structured ignores with paths and reasons
-- **`trivy-policy.yaml`** - Advanced policy rules
+- **`trivy-policy.rego`** - Advanced policy rules in Rego format
 
-**Auto-detection**: The hook automatically finds these files unless you specify `--ignorefile` or `--config-policy` manually in your pre-commit config.
+**Auto-detection**: The hook automatically finds these files unless you specify `--ignorefile` or `--config-check` manually in your pre-commit config.
